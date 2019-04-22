@@ -1,0 +1,17 @@
+#results {
+    margin-top: 15px;
+}
+
+#error {
+    padding: 0 15px;
+}
+
+#save-modal-link {
+    margin-right: 5px;
+}
+#launch-button {
+    font-size: small;
+}
+#save-modal-url {
+    width: 100%;
+}
