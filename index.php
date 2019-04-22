@@ -10,7 +10,7 @@
 
             <div class="form-group">
                 <label for="query">Query</label>
-                <input type="text" id="query" name="query" class="form-control">
+                <input type="text" id="query-container" name="query" class="form-control">
             </div>
             <div class="form-group">
                 <label for="datasource">Datasource</label>
@@ -25,14 +25,33 @@
             </div>
         </div>
 
-        <div>
-            <table class="table" id="results">
-            </table>
+        <!-- // Tab container (results and history) -->
+        <ul class="nav nav-tabs" id="tab-container" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="results-tab" data-toggle="tab" href="#results" role="tab" aria-controls="results" aria-selected="true">Results</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">History</a>
+            </li>
+        </ul>
+
+        <!-- // Tab containers -->
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="results" role="tabpanel" aria-labelledby="results-tab">
+                <div>
+                    <table class="table" id="results-container"></table>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                <div id="history-container"></div>
+            </div>
         </div>
 
+        <!-- // Error container -->
         <div>
             <div class="alert-danger" id="error"></div>
         </div>
+
 
         <!-- // This is a Bootstrap modal dialog, invoked by JavaScript-->
         <div class="modal" tabindex="-1" role="dialog" id="error-modal">
