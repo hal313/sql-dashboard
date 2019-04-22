@@ -36,16 +36,17 @@ $(function onReady() {
     let $errorContainer = $('#error'),
         $errorModal = $('#error-modal');
     //
-    // The result and query containers
-    let $resultsContainer = $('#results');
-    let $queryContainer = $('#query');
+    // The result, query and history containers
+    let $resultsContainer = $('#results-container');
+    let $queryContainer = $('#query-container');
+    let $historyContainer = $('#history-container');
     //
     // The data source list element
     let $dataSourceList = $('#datasources');
     // Create the data sources
     let dataSources = {
-        sqlite3: new SQLite3DataSource(),
-        websql: new WebSQLDataSource()
+        websql: new WebSQLDataSource(),
+        sqlite3: new SQLite3DataSource()
     };
     //
     // Populate the data sources
@@ -103,7 +104,7 @@ $(function onReady() {
     //   The "enter" key is pressed within the "query" text field
     $queryContainer.keypress(function onKeyPress(event) {
         // If "enter" (13) is pressed
-         if (13 === event.charCode) {
+        if (13 === event.charCode) {
             // Invoke the search
             doQuery();
         }
@@ -155,17 +156,17 @@ $(function onReady() {
      */
     function doQuery() {
         // Get the query string (at the time the query was executed)
-        let query = $queryContainer.val();
+        let sqlQuery = $queryContainer.val();
 
         Promise.resolve()
             // Reset the UI
             .then(resetUIForQuery)
-            // Get the data source
-            .then(getDataSource)
             // Execute the query
-            .then((datasource) => datasource.execute(query))
+            .then(() => executeQuery(sqlQuery))
             // Handle the results
             .then(handleQueryResults)
+            // Add to history
+            .then(() => addToHistory(sqlQuery))
             // Handle error
             .catch(handleError);
     };
@@ -216,16 +217,27 @@ $(function onReady() {
             $resultsContainer.append(rowHTML);
         });
     }
-
+    //
+    /**
+     * Generate a URL for saving.
+     *
+     * @param {String} sqlQuery the query to run
+     * @param {String} datasourceId the ID of the datasource to use
+     * @return {String} a URL which will auto-run the query when loaded
+     */
+    function generateSaveURL(sqlQuery, datasourceId) {
+        return `${location.href.split('?')[0]}?datasource=${datasourceId}&autorun=true&op=query&sql=${encodeURIComponent(sqlQuery)}`;
+    }
+    //
     /**
      * Shows the "save" modal.
      *
-     * @param {String} query the SQL statement to save
-     * @param {String} datasource the ID of the data source
+     * @param {String} sqlQuery the SQL statement to save
+     * @param {String} datasourceId the ID of the data source
      */
-    function showSave(query, datasource) {
+    function showSave(sqlQuery, datasourceId) {
         // Build the save URL
-        let url = `${location.href.split('?')[0]}?datasource=${datasource}&autorun=true&op=query&sql=${encodeURIComponent(query)}`;
+        let url = generateSaveURL(sqlQuery, datasourceId);
 
         // Populate the modal fields
         $saveModalLink.html(`<a href="${url}" target="_blank">Open in new window</a>`);
@@ -248,6 +260,60 @@ $(function onReady() {
         $messageModal.modal();
     }
     //
+    /**
+     * Adds a query to the history
+     *
+     * @param {String} sqlQuery the query to add to the results
+     */
+    function addToHistory(sqlQuery) {
+        // Add to the history (at the top)
+        //
+        // Generate the URL
+        let url = generateSaveURL(sqlQuery, $dataSourceList.val());
+        // Write the DOM element
+        $historyContainer.prepend(`
+            <div class="history-item-container">
+                <a href="${url}" target="_blank">
+                    <i id="launch-button" class="fas fa-external-link-square-alt"></i>
+                </a>
+                <a class="history-link" onclick="rerunQuery('${sqlQuery}');return false;" href="/">${sqlQuery}</a>
+            </div>
+        `);
+    }
+    /**
+     * Executes a query against the currently selected data source.
+     *
+     * @param {String} sqlQuery the query to execute
+     * @return {Promise} a promise which resolves with the query results
+     */
+    function executeQuery(sqlQuery) {
+        return Promise.resolve()
+            // Get the data source
+            .then(getDataSource)
+            // Execute the query
+            .then((datasource) => datasource.execute(sqlQuery))
+        ;
+    }
+    //
+    /**
+     * Reruns a query and updates the results, but does not add to the history.
+     *
+     * @param {String} sqlQuery the query to rerun
+     */
+    window.rerunQuery = function rerunQuery(sqlQuery) {
+        // Execute the query
+        Promise.resolve()
+            // Reset the UI
+            .then(resetUIForQuery)
+            // Execute the query
+            .then(() => executeQuery(sqlQuery))
+            // Handle the results
+            .then(handleQueryResults)
+            // Change to "results" tab
+            .then(() => $('#results-tab').trigger('click'))
+            // Handle error
+            .catch(handleError);
+    };
     /**
      * Shows an "error" modal.
      *
